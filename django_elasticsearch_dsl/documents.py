@@ -135,7 +135,7 @@ class DocType(DSLDocument):
         }
 
     def _get_actions(self, object_list, action):
-        qs_pagination = self._doc_type.queryset_pagination
+        qs_pagination = self.django.queryset_pagination
         if qs_pagination is not None:
             if isinstance(object_list, models.QuerySet):
                 for ranged_qs in batch_iterate(object_list, qs_pagination):
