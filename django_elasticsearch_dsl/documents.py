@@ -5,6 +5,7 @@ from django.db import models
 from django.utils.six import iteritems
 from elasticsearch.helpers import bulk
 from elasticsearch_dsl import Document as DSLDocument
+from .utils import batch_iterate
 
 from .exceptions import ModelFieldNotMappedError
 from .fields import (
@@ -134,13 +135,17 @@ class DocType(DSLDocument):
         }
 
     def _get_actions(self, object_list, action):
-        if self.django.queryset_pagination is not None:
-            paginator = Paginator(
-                object_list, self.django.queryset_pagination
-            )
-            for page in paginator.page_range:
-                for object_instance in paginator.page(page).object_list:
-                    yield self._prepare_action(object_instance, action)
+        qs_pagination = self._doc_type.queryset_pagination
+        if qs_pagination is not None:
+            if isinstance(object_list, models.QuerySet):
+                for ranged_qs in batch_iterate(object_list, qs_pagination):
+                    for object_instance in ranged_qs:
+                        yield self._prepare_action(object_instance, action)
+            else:
+                paginator = Paginator(object_list, qs_pagination)
+                for page in paginator.page_range:
+                    for object_instance in paginator.page(page).object_list:
+                        yield self._prepare_action(object_instance, action)
         else:
             for object_instance in object_list:
                 yield self._prepare_action(object_instance, action)
