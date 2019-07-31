@@ -13,5 +13,6 @@ def batch_iterate(qs, size=100):
     pks.append(last_pk + 1)
 
     for lower, upper in zip(pks, pks[1:]):
+        print('Processing ', lower, upper)
         ranged_qs = qs.filter(pk__range=(lower, upper - 1))
         yield ranged_qs
