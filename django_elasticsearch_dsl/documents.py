@@ -70,7 +70,8 @@ class DocType(DSLDocument):
         """
         Return the queryset that should be indexed by this doc type.
         """
-        return self.django.model._default_manager.all()
+        primary_key_field_name = self.django.model._meta.pk.name
+        return self.django.model._default_manager.all().order_by(primary_key_field_name)
 
     def prepare(self, instance):
         """
@@ -127,7 +128,6 @@ class DocType(DSLDocument):
         return {
             '_op_type': action,
             '_index': self._index._name,
-            '_type': self._doc_type.name,
             '_id': object_instance.pk,
             '_source': (
                 self.prepare(object_instance) if action != 'delete' else None
